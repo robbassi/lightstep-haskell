@@ -8,6 +8,7 @@ import LightStep.HighLevel.Polysemy (LightStepConfig (..), runOpenTracingWithLig
 import Polysemy
 import Polysemy.Async
 import Polysemy.OpenTracing
+import Polysemy.Resource
 import Polysemy.Trace
 import System.Environment
 import System.Exit
@@ -16,10 +17,10 @@ import qualified Data.Text as T
 sleep :: Member (Embed IO) r => Int -> Sem r ()
 sleep = embed . threadDelay
 
-seriousBusinessMain :: (Member OpenTracing r, Member (Embed IO) r) => Sem r ()
+seriousBusinessMain :: (Member OpenTracing r, Member Resource r, Member (Embed IO) r) => Sem r ()
 seriousBusinessMain = frontend >> backend
   where
-    frontend :: (Member OpenTracing r, Member (Embed IO) r) => Sem r ()
+    -- frontend :: (Member OpenTracing r, Member (Embed IO) r) => Sem r ()
     frontend =
       withSpan "RESTful API" $ do
         sleep 10000
@@ -70,6 +71,7 @@ main = do
   seriousBusinessMain
     & openTracingToTrace
     & traceToIO
+    & resourceToIO
     & runM
 
   putStrLn "All done (stdout reporting)"
